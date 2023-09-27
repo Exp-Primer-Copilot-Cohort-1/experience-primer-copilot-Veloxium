@@ -8,7 +8,7 @@ const router = express.Router();
 const port = 3000;
 
 // create a middleware
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // create a route
