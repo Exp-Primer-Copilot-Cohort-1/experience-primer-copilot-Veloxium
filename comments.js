@@ -1,34 +1,49 @@
-// create web server
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
-// create a router
-const router = express.Router();
-// create a port
-const port = 3000;
+// create web server 
+// 1. load modules
+var express = require("express");
+var app = express();
+var fs = require("fs");
+var bodyParser = require('body-parser');
 
-// create a middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+// 2. set up middleware
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
+app.use(express.static(__dirname + "/public"));
 
-// create a route
-router.get('/comments', (req, res) => {
-    res.json({
-        message: 'Welcome to our API!'
-    });
+// 3. set up routes
+app.get("/", function(req, res) {
+  res.sendFile(__dirname + "/public/index.html");
 });
 
-router.post('/comments', (req, res) => {
-    res.json({
-        message: 'Your comment has been saved!',
-        comment: req.body.comment
-    });
+app.get("/comments", function(req, res) {
+  fs.readFile(__dirname + "/public/comments.json", function(err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      res.send(data);
+    }
+  });
 });
 
-// register our route
-app.use('/api', router);
+app.post("/comments", function(req, res) {
+  fs.readFile(__dirname + "/public/comments.json", function(err, data) {
+    if (err) {
+      console.log(err);
+    } else {
+      var comments = JSON.parse(data);
+      comments.push(req.body);
+      fs.writeFile(__dirname + "/public/comments.json", JSON.stringify(comments, null, 4), function(err) {
+        if (err) {
+          console.log(err);
+        } else {
+          res.send(comments);
+        }
+      });
+    }
+  });
+});
 
-// start our server
-app.listen(port, () => {
-    console.log(`Server started on port ${port}`);
+// 4. start server
+app.listen(3000, function() {
+  console.log("Server is running on port 3000");
 });
