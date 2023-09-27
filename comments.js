@@ -1,49 +1,49 @@
 // create web server 
-// 1. load modules
-var express = require("express");
-var app = express();
-var fs = require("fs");
-var bodyParser = require('body-parser');
+var express = require('express');
+var router = express.Router();
 
-// 2. set up middleware
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
-app.use(express.static(__dirname + "/public"));
+// call model
+var Comment = require('../models/Comment');
 
-// 3. set up routes
-app.get("/", function(req, res) {
-  res.sendFile(__dirname + "/public/index.html");
+// create comment
+router.post('/', function(req, res){
+    Comment.create(req.body, function(err, comment){
+        if(err) return res.json(err);
+        res.redirect('/comments');
+    });
 });
 
-app.get("/comments", function(req, res) {
-  fs.readFile(__dirname + "/public/comments.json", function(err, data) {
-    if (err) {
-      console.log(err);
-    } else {
-      res.send(data);
-    }
-  });
+// show comment
+router.get('/', function(req, res){
+    Comment.find({}, function(err, comments){
+        if(err) return res.json(err);
+        res.render('comments/index', {data: comments});
+    });
 });
 
-app.post("/comments", function(req, res) {
-  fs.readFile(__dirname + "/public/comments.json", function(err, data) {
-    if (err) {
-      console.log(err);
-    } else {
-      var comments = JSON.parse(data);
-      comments.push(req.body);
-      fs.writeFile(__dirname + "/public/comments.json", JSON.stringify(comments, null, 4), function(err) {
-        if (err) {
-          console.log(err);
-        } else {
-          res.send(comments);
-        }
-      });
-    }
-  });
+// edit comment
+router.get('/:id/edit', function(req, res){
+    Comment.findOne({_id:req.params.id}, function(err, comment){
+        if(err) return res.json(err);
+        res.render('comments/edit', {data: comment});
+    });
 });
 
-// 4. start server
-app.listen(3000, function() {
-  console.log("Server is running on port 3000");
+// update comment
+router.put('/:id', function(req, res){
+    Comment.findOneAndUpdate({_id:req.params.id}, req.body, function(err, comment){
+        if(err) return res.json(err);
+        res.redirect('/comments');
+    });
 });
+
+// delete comment
+router.delete('/:id', function(req, res){
+    Comment.remove({_id:req.params.id}, function(err, comment){
+        if(err) return res.json(err);
+        res.redirect('/comments');
+    });
+});
+
+// export router
+module.exports = router;
